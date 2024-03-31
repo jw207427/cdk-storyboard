@@ -20,6 +20,9 @@ class StoryboardAPIStack(Stack):
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(
                     "AmazonSageMakerFullAccess"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "AmazonBedrockFullAccess"
                 )
             ],
         )
@@ -35,10 +38,10 @@ class StoryboardAPIStack(Stack):
             "arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p39-pillow:1"
         )
 
-        # Define the Lambda function
+        # Define the Image Generation Lambda function
         lambda_fn = lambda_.Function(
             self,
-            "StoryboardLambda",
+            "ImageGenerationLambda",
             runtime=lambda_.Runtime.PYTHON_3_9,
             timeout=Duration.seconds(300),  # Set timeout to 300 seconds (5 minutes)
             memory_size=128,  # Set memory size to 1024 MB (1 GB)
@@ -46,6 +49,19 @@ class StoryboardAPIStack(Stack):
             handler="lambda_function.lambda_handler",
             role=lambda_role,
             layers=[boto3_layer, pillow_layer]
+        )
+
+        # Define the Story Generation Lambda function
+        lambda_fn = lambda_.Function(
+            self,
+            "StoryGenerationLambda",
+            runtime=lambda_.Runtime.PYTHON_3_9,
+            timeout=Duration.seconds(300),  # Set timeout to 300 seconds (5 minutes)
+            memory_size=128,  # Set memory size to 1024 MB (1 GB)
+            code=lambda_.Code.from_asset("scene_generator"),
+            handler="lambda_function.lambda_handler",
+            role=lambda_role,
+            layers=[boto3_layer]
         )
 
         # Create the IAM role for API Gateway CloudWatch Logs
